@@ -1,13 +1,14 @@
-// +build !ci
+//go:build !ci && !android && !ios && !mobile && !tamago && !noos && !tinygo
 
 package app
 
 import (
-	"fyne.io/fyne"
-	"fyne.io/fyne/driver/gl"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/internal/driver/glfw"
 )
 
-// New returns a new app instance using the OpenGL driver.
-func New() fyne.App {
-	return NewAppWithDriver(gl.NewGLDriver())
+// NewWithID returns a new app instance using the appropriate runtime driver.
+// The ID string should be globally unique to this app.
+func NewWithID(id string) fyne.App {
+	return newAppWithDriver(glfw.NewGLDriver(), glfw.NewClipboard(), id)
 }

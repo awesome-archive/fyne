@@ -3,29 +3,71 @@ package layout
 import (
 	"math"
 
-	"fyne.io/fyne"
-	"fyne.io/fyne/theme"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/theme"
 )
 
+// Declare conformity with Layout interface
+var _ fyne.Layout = (*gridLayout)(nil)
+
 type gridLayout struct {
-	Cols int
+	Cols            int
+	vertical, adapt bool
+}
+
+// NewAdaptiveGridLayout returns a new grid layout which uses columns when horizontal but rows when vertical.
+func NewAdaptiveGridLayout(rowcols int) fyne.Layout {
+	return &gridLayout{Cols: rowcols, adapt: true}
+}
+
+// NewGridLayout returns a grid layout arranged in a specified number of columns.
+// The number of rows will depend on how many children are in the container that uses this layout.
+func NewGridLayout(cols int) fyne.Layout {
+	return NewGridLayoutWithColumns(cols)
+}
+
+// NewGridLayoutWithColumns returns a new grid layout that specifies a column count and wrap to new rows when needed.
+func NewGridLayoutWithColumns(cols int) fyne.Layout {
+	return &gridLayout{Cols: cols}
+}
+
+// NewGridLayoutWithRows returns a new grid layout that specifies a row count that creates new rows as required.
+func NewGridLayoutWithRows(rows int) fyne.Layout {
+	return &gridLayout{Cols: rows, vertical: true}
+}
+
+func (g *gridLayout) horizontal() bool {
+	if g.adapt {
+		return fyne.IsHorizontal(fyne.CurrentDevice().Orientation())
+	}
+
+	return !g.vertical
 }
 
 func (g *gridLayout) countRows(objects []fyne.CanvasObject) int {
-	return int(math.Ceil(float64(len(objects)) / float64(g.Cols)))
+	if g.Cols < 1 {
+		g.Cols = 1
+	}
+	count := 0
+	for _, child := range objects {
+		if child.Visible() {
+			count++
+		}
+	}
+
+	return int(math.Ceil(float64(count) / float64(g.Cols)))
 }
 
 // Get the leading (top or left) edge of a grid cell.
-// size is the ideal cell size and the offset is which col or row it's on.
-func getLeading(size float64, offset int) int {
+// size is the ideal cell size and the offset is which col or row its on.
+func getLeading(size float64, offset int) float32 {
 	ret := (size + float64(theme.Padding())) * float64(offset)
-
-	return int(math.Round(ret))
+	return float32(ret)
 }
 
-// Get theh trailing (bottom or right) edge of a grid cell.
-// size is the ideal cell size and the offset is which col or row it's on.
-func getTrailing(size float64, offset int) int {
+// Get the trailing (bottom or right) edge of a grid cell.
+// size is the ideal cell size and the offset is which col or row its on.
+func getTrailing(size float64, offset int) float32 {
 	return getLeading(size, offset+1) - theme.Padding()
 }
 
@@ -35,14 +77,26 @@ func getTrailing(size float64, offset int) int {
 func (g *gridLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	rows := g.countRows(objects)
 
-	padWidth := (g.Cols - 1) * theme.Padding()
-	padHeight := (rows - 1) * theme.Padding()
+	padding := theme.Padding()
 
-	cellWidth := float64(size.Width-padWidth) / float64(g.Cols)
-	cellHeight := float64(size.Height-padHeight) / float64(rows)
+	primaryObjects := rows
+	secondaryObjects := g.Cols
+	if g.horizontal() {
+		primaryObjects, secondaryObjects = secondaryObjects, primaryObjects
+	}
+
+	padWidth := float32(primaryObjects-1) * padding
+	padHeight := float32(secondaryObjects-1) * padding
+	cellWidth := float64(size.Width-padWidth) / float64(primaryObjects)
+	cellHeight := float64(size.Height-padHeight) / float64(secondaryObjects)
 
 	row, col := 0, 0
-	for i, child := range objects {
+	i := 0
+	for _, child := range objects {
+		if !child.Visible() {
+			continue
+		}
+
 		x1 := getLeading(cellWidth, col)
 		y1 := getLeading(cellHeight, row)
 		x2 := getTrailing(cellWidth, col)
@@ -51,14 +105,22 @@ func (g *gridLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 		child.Move(fyne.NewPos(x1, y1))
 		child.Resize(fyne.NewSize(x2-x1, y2-y1))
 
-		if (i+1)%g.Cols == 0 {
-			row++
-			col = 0
-
+		if g.horizontal() {
+			if (i+1)%g.Cols == 0 {
+				row++
+				col = 0
+			} else {
+				col++
+			}
 		} else {
-			col++
-
+			if (i+1)%g.Cols == 0 {
+				col++
+				row = 0
+			} else {
+				row++
+			}
 		}
+		i++
 	}
 }
 
@@ -70,14 +132,25 @@ func (g *gridLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	rows := g.countRows(objects)
 	minSize := fyne.NewSize(0, 0)
 	for _, child := range objects {
-		minSize = minSize.Union(child.MinSize())
+		if !child.Visible() {
+			continue
+		}
+
+		minSize = minSize.Max(child.MinSize())
 	}
 
-	minContentSize := fyne.NewSize(minSize.Width*g.Cols, minSize.Height*rows)
-	return minContentSize.Add(fyne.NewSize(theme.Padding()*(g.Cols-1), theme.Padding()*(rows-1)))
-}
+	padding := theme.Padding()
 
-// NewGridLayout returns a new GridLayout instance
-func NewGridLayout(cols int) fyne.Layout {
-	return &gridLayout{cols}
+	primaryObjects := rows
+	secondaryObjects := g.Cols
+	if g.horizontal() {
+		primaryObjects, secondaryObjects = secondaryObjects, primaryObjects
+	}
+
+	width := minSize.Width * float32(primaryObjects)
+	height := minSize.Height * float32(secondaryObjects)
+	xpad := padding * fyne.Max(float32(primaryObjects-1), 0)
+	ypad := padding * fyne.Max(float32(secondaryObjects-1), 0)
+
+	return fyne.NewSize(width+xpad, height+ypad)
 }

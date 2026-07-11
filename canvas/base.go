@@ -1,69 +1,69 @@
-// Package canvas contains all of the primitive CanvasObjects that make up a Fyne GUI
-package canvas // import "fyne.io/fyne/canvas"
+// Package canvas contains all of the primitive CanvasObjects that make up a Fyne GUI.
+//
+// The types implemented in this package are used as building blocks in order
+// to build higher order functionality. These types are designed to be
+// non-interactive, by design. If additional functionality is required,
+// it's usually a sign that this type should be used as part of a custom
+// widget.
+package canvas // import "fyne.io/fyne/v2/canvas"
 
-import "fyne.io/fyne"
+import (
+	"fyne.io/fyne/v2"
+)
 
 type baseObject struct {
-	size     fyne.Size     // The current size of the Rectangle
-	position fyne.Position // The current position of the Rectangle
+	size     fyne.Size     // The current size of the canvas object
+	position fyne.Position // The current position of the object
 	Hidden   bool          // Is this object currently hidden
 
 	min fyne.Size // The minimum size this object can be
 }
 
-// CurrentSize returns the current size of this rectangle object
-func (r *baseObject) Size() fyne.Size {
-	return r.size
+// Hide will set this object to not be visible.
+func (o *baseObject) Hide() {
+	o.Hidden = true
 }
 
-// Resize sets a new size for the rectangle object
-func (r *baseObject) Resize(size fyne.Size) {
-	r.size = size
-}
-
-// CurrentPosition gets the current position of this rectangle object, relative to it's parent / canvas
-func (r *baseObject) Position() fyne.Position {
-	return r.position
-}
-
-// Move the rectangle object to a new position, relative to it's parent / canvas
-func (r *baseObject) Move(pos fyne.Position) {
-	r.position = pos
-}
-
-// MinSize returns the specified minimum size, if set, or {1, 1} otherwise
-func (r *baseObject) MinSize() fyne.Size {
-	if r.min.Width == 0 && r.min.Height == 0 {
-		return fyne.NewSize(1, 1)
+// MinSize returns the specified minimum size, if set, or {1, 1} otherwise.
+func (o *baseObject) MinSize() fyne.Size {
+	if o.min.IsZero() {
+		return fyne.Size{Width: 1, Height: 1}
 	}
 
-	return r.min
+	return o.min
 }
 
-// SetMinSize specifies the smallest size this object should be
-func (r *baseObject) SetMinSize(size fyne.Size) {
-	r.min = size
+// Move the object to a new position, relative to its parent.
+func (o *baseObject) Move(pos fyne.Position) {
+	o.position = pos
 }
 
-// IsVisible returns true if this object is visible, false otherwise
-func (r *baseObject) Visible() bool {
-	return !r.Hidden
+// Position gets the current position of this canvas object, relative to its parent.
+func (o *baseObject) Position() fyne.Position {
+	return o.position
 }
 
-// Show will set this object to be visible
-func (r *baseObject) Show() {
-	r.Hidden = false
+// Resize sets a new size for the canvas object.
+func (o *baseObject) Resize(size fyne.Size) {
+	o.size = size
 }
 
-// Hide will set this object to not be visible
-func (r *baseObject) Hide() {
-	r.Hidden = true
+// SetMinSize specifies the smallest size this object should be.
+func (o *baseObject) SetMinSize(size fyne.Size) {
+	o.min = size
 }
 
-// Refresh instructs the containing canvas to refresh the specified obj.
-func Refresh(obj fyne.CanvasObject) {
-	c := fyne.CurrentApp().Driver().CanvasForObject(obj)
-	if c != nil {
-		c.Refresh(obj)
-	}
+// Show will set this object to be visible.
+func (o *baseObject) Show() {
+	o.Hidden = false
+}
+
+// Size returns the current size of this canvas object.
+func (o *baseObject) Size() fyne.Size {
+	return o.size
+}
+
+// Visible returns true if this object is visible, false otherwise.
+func (o *baseObject) Visible() bool {
+	return !o.Hidden
 }

@@ -1,6 +1,6 @@
 package layout
 
-import "fyne.io/fyne"
+import "fyne.io/fyne/v2"
 
 // SpacerObject is any object that can be used to space out child objects
 type SpacerObject interface {
@@ -17,6 +17,12 @@ type Spacer struct {
 	size   fyne.Size
 	pos    fyne.Position
 	hidden bool
+}
+
+// NewSpacer returns a spacer object which can fill vertical and horizontal
+// space. This is primarily used with a box layout.
+func NewSpacer() fyne.CanvasObject {
+	return &Spacer{}
 }
 
 // ExpandVertical returns whether or not this spacer expands on the vertical axis
@@ -69,8 +75,6 @@ func (s *Spacer) Hide() {
 	s.hidden = true
 }
 
-// NewSpacer returns a spacer object which can fill vertical and horizontal
-// space. This is primarily used with a box layout.
-func NewSpacer() fyne.CanvasObject {
-	return &Spacer{}
+// Refresh does nothing for a spacer but is part of the CanvasObject definition
+func (s *Spacer) Refresh() {
 }

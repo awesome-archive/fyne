@@ -1,57 +1,84 @@
 <p align="center">
-  <a href="https://godoc.org/fyne.io/fyne" title="GoDoc Reference" rel="nofollow"><img src="https://img.shields.io/badge/go-documentation-blue.svg?style=flat" alt="GoDoc Reference"></a>
-  <a href="https://github.com/fyne-io/fyne/releases/tag/v1.0.0" title="1.0.0 Release" rel="nofollow"><img src="https://img.shields.io/badge/version-1.0.0-blue.svg?style=flat" alt="1.0.0 release"></a>
-  <a href='http://gophers.slack.com/messages/fyne'><img src='https://img.shields.io/badge/join-us%20on%20slack-gray.svg?longCache=true&logo=slack&colorB=blue' alt='Join us on Slack' /></a>
-  <a href='https://fossfi.sh/support-fyneio'><img src='https://img.shields.io/badge/$-support_us-orange.svg?labelWidth=20&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAkCAYAAADPRbkKAAAABmJLR0QA7wAyAD/CTveyAAAACXBIWXMAAA9hAAAPYQGoP6dpAAAAB3RJTUUH4wMVCQ4LeuPReAAABDFJREFUWMPVmX9oVWUYxz/3tr5jbX9oYiZWSmNgoYYlUVqraYvIamlCg8pqUBTZr38qMhZZ0A8oIqKIiLJoJtEIsR+zki1mGqQwZTYkImtlgk5Wy7jPnbv90XPgcD3n3Lvdy731wOGc+77nec73Oe/zfp/nOTeVy+WolphZC3CVH9N9OAsMAzuBLkkHkmykKu2AmQGsAjYAC4pQ+QJ4WNJg1R0ws3pgI3DTJFVPAM8AGyRNVMUBB98DLCvBzLtAh6QTwUC6gmGzuUTwAGuBR8MD6QpFzwPAypi5v4HXgRXAEg+vLQm2njSzCyoWQmbWAPwAzIqY/gm4UdJAhN5qoAuojdCbAD4BVlViBdbGgJ8A2gPwZtZsZvea2XwASd1AZ4zNNHA90FgJB9ri6FHStw7+WaAPeA3YbWaBzovAiF/nfMUC+QD4sRIOLIkZ73Hws4BHQuOneY7A2aY/CHdgL3AtsBhYD9TVVMCB0+O2h59nRJBJfej6WOj6Bj8C2VcpFoqSC/38PbArb24zQDabBWhOsFFbNAuZ2UygxZcvcHwPsEPScILecaAuYmoUaJR01MymAU8AFzm7vCxp3MxagW0xpv8EzinogLPC40A7cGpMKHQB6yX9FqE/ACyKMb8VWC0pG6E3D+gF5sbo9km6Ml0A/N3Ad8BtMeABBNwB9JrZ7Ij5PQmPuA7YZWZXmFnan1ljZrf65p2boDuQmInNrAN4I29DJUmT02C+bCtiL/QCo2Y2BIwB7wFzCuj1xGZiM7vcb9gOTAMunUTZMVPSkZCtJuBAmQngIHCupImaCPApoBVokvSrj7UDm4o0Pg84Evo97EkoVUYHXgjK6pNWwB1I5dfdZtbtjUghWSppZ0ivDvirjA4MAosCfCeFhaRcPvhQLV6QbYGhvLHZZQRvwO1hfJNJZFu9qkySNyUdyxu7pkzgc8BDknZPuSMzs8XA58AZEdPbgTZJY3ld2GABOixWXpH0YMk9sZlN96zZ6hn2F+AdYFM4IZlZLfBRQiMzGXlaUmdFmnpPSC3A814alCJjwDpJG+NuqCkC0HzgLi+L651RvgTeAu4ELnHazAJnedkwpwzvoh+4RdLPid+FMpnMDElHY8CvAd4GGiKmR4A1DvwpYHkZabLTO7KCkgYeiwG/3Iu0hoQ6fwvwh6QVwFKn2tEpgB4BPgSaJS0oFnywAnuB5yR15bHNV6HPfUnyqaSVIV0BlwEXe51zNtAYehGHgMNOyfu9F+iXND6V5UplMplXgfuAj4HPgIXAPcXsj5CcKelwNbqiVCaTOd/jrhRZJumbajiQlrQf6OZ/KkEpsQ74vQQ7w1V1QNIh4Gbg+BRs9BXi6kqsAJK+Bq52hihWxoH7/wshFDixw786vF9kmm+TtK+aDsTWQma2EOjg379/zgNO8akh73NfknSw2pv4H3Ayg0FmbTMRAAAAAElFTkSuQmCC' alt='Support Fyne.io' /></a>
+  <a href="https://pkg.go.dev/fyne.io/fyne/v2?tab=doc" title="Go API Reference" rel="nofollow"><img src="https://img.shields.io/badge/go-documentation-blue.svg?style=flat" alt="Go API Reference"></a>
+  <a href="https://img.shields.io/github/v/release/fyne-io/fyne?include_prereleases" title="Latest Release" rel="nofollow"><img src="https://img.shields.io/github/v/release/fyne-io/fyne?include_prereleases" alt="Latest Release"></a>
+  <a href='https://gophers.slack.com/messages/fyne'><img src='https://img.shields.io/badge/join-us%20on%20slack-gray.svg?longCache=true&logo=slack&colorB=blue' alt='Join us on Slack' /></a>
   <br />
-  <a href="https://goreportcard.com/report/fyne.io/fyne"><img src="https://goreportcard.com/badge/fyne.io/fyne" alt="Code Status" /></a>
-  <a href="https://travis-ci.org/fyne-io/fyne"><img src="https://travis-ci.org/fyne-io/fyne.svg" alt="Build Status" /></a>
+  <a href="https://goreportcard.com/report/fyne.io/fyne/v2"><img src="https://goreportcard.com/badge/fyne.io/fyne/v2" alt="Code Status" /></a>
+  <a href="https://github.com/fyne-io/fyne/actions"><img src="https://github.com/fyne-io/fyne/workflows/Platform%20Tests/badge.svg" alt="Build Status" /></a>
   <a href='https://coveralls.io/github/fyne-io/fyne?branch=develop'><img src='https://coveralls.io/repos/github/fyne-io/fyne/badge.svg?branch=develop' alt='Coverage Status' /></a>
-  <!--a href='https://sourcegraph.com/github.com/fyne-io/fyne?badge'><img src='https://sourcegraph.com/github.com/fyne-io/fyne/-/badge.svg' alt='Used By' /></a-->
 </p>
 
 # About
 
-[Fyne](http://fyne.io) is an easy to use UI toolkit and app API written in Go. We use OpenGL (through the go-gl and go-glfw projects) to provide cross platform graphics.
+[Fyne](https://fyne.io) is an easy-to-use UI toolkit and app API written in Go.
+It is designed to build applications that run on desktop and mobile devices with a
+single codebase.
 
-The 1.0 release is now out and we encourage feedback and requests for the next major release :).
+# Prerequisites
 
-# Getting Started
-
-Fyne is designed to be really easy to code with. Here are the steps to your first app.
-
-## Prerequisites
-
-As Fyne uses CGo you will require a C compiler (typically gcc).
-If you don't have one set up the instructions at [Compiling](https://github.com/fyne-io/fyne/wiki/Compiling) may help.
-
-By default Fyne uses the [gl golang bindings](https://github.com/go-gl/gl) which means you need a working OpenGL configuration.
-Debian/Ubuntu based systems may also need to install the `libgl1-mesa-dev` and `xorg-dev` packages.
+To develop apps using Fyne you will need Go version 1.17 or later, a C compiler and your system's development tools.
+If you're not sure if that's all installed or you don't know how then check out our
+[Getting Started](https://fyne.io/develop/) document.
 
 Using the standard go tools you can install Fyne's core library using:
 
-    go get fyne.io/fyne
+    go get fyne.io/fyne/v2@latest
 
-## Code
+After importing a new module, run the following command before compiling the code for the first time. Avoid running it before writing code that uses the module to prevent accidental removal of dependencies:
 
-And then you're ready to write your first app!
+    go mod tidy
+
+# Widget demo
+
+To run a showcase of the features of Fyne execute the following:
+
+    go install fyne.io/demo@latest
+    demo
+
+And you should see something like this (after you click a few buttons):
+
+<p align="center" markdown="1" style="max-width: 100%">
+  <img src="img/widgets-dark.png" width="752" alt="Fyne Demo Dark Theme" style="max-width: 100%" />
+</p>
+
+Or if you are using the light theme:
+
+<p align="center" markdown="1" style="max-width: 100%">
+  <img src="img/widgets-light.png" width="752" alt="Fyne Demo Light Theme" style="max-width: 100%" />
+</p>
+
+And even running on a mobile device:
+
+<p align="center" markdown="1" style="max-width: 100%">
+  <img src="img/widgets-mobile-light.png" width="348" alt="Fyne Demo Mobile Light Theme" style="max-width: 100%" />
+</p>
+
+# Getting Started
+
+Fyne is designed to be really easy to code with.
+If you have followed the prerequisite steps above then all you need is a
+Go IDE (or a text editor).
+
+Open a new file and you're ready to write your first app!
 
 ```go
 package main
 
 import (
-	"fyne.io/fyne/widget"
-	"fyne.io/fyne/app"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 )
 
 func main() {
-	app := app.New()
+	a := app.New()
+	w := a.NewWindow("Hello")
 
-	w := app.NewWindow("Hello")
-	w.SetContent(widget.NewVBox(
-		widget.NewLabel("Hello Fyne!"),
-		widget.NewButton("Quit", func() {
-			app.Quit()
+	hello := widget.NewLabel("Hello Fyne!")
+	w.SetContent(container.NewVBox(
+		hello,
+		widget.NewButton("Hi!", func() {
+			hello.SetText("Welcome :)")
 		}),
 	))
 
@@ -63,103 +90,95 @@ And you can run that simply as:
 
     go run main.go
 
+> [!NOTE]  
+> The first compilation of Fyne on Windows _can_ take up to 10 minutes, depending on your hardware. Subsequent builds will be fast.
+
 It should look like this:
 
-<p align="center" markdown="1">
-  <img src="img/hello-normal.png" width="207" height="204" alt="Fyne Hello Dark Theme" />
-</p>
+<div align="center">
+  <table cellpadding="0" cellspacing="0" style="margin: auto; border-collapse: collapse;">
+    <tr style="border: none;"><td style="border: none;">
+      <img src="img/hello-light.png" width="207" alt="Fyne Hello Dark Theme" />
+    </td><td style="border: none;">
+      <img src="img/hello-dark.png" width="207" alt="Fyne Hello Dark Theme" />
+    </td></tr>
+  </table>
+</div>
 
-> Note that Windows applications load from a command prompt by default, which means if you click an icon you may see a command window.
-> To fix this add the parameters `-ldflags -H=windowsgui` to your run or build commands.
+## Run in mobile simulation
 
-# Scaling
+There is a helpful mobile simulation mode that gives a hint of how your app would work on a mobile device:
 
-Fyne is built entirely using vector graphics, which means applications
-written with Fyne will scale to any value beautifully (not just whole number values).
-The default scale value is calculated from your screen's DPI - and if you move
-a window to another screen it will re-scale and adjust the window size accordingly!
-We call this "auto scaling", and it is designed to keep an app GUI the same size as you change monitor.
-You can override this behaviour by setting a specific scale using the FYNE_SCALE environment variable.
+    go run -tags mobile main.go
 
-<table style="text-align: center"><tr>
-<td><img src="img/hello-normal.png" width="207" height="204" alt="Hello normal size" />
-  <br />Standard size</td>
-<td><img src="img/hello-small.png" width="160" height="169" alt="Hello small size" />
-  <br />FYNE_SCALE=0.5</td>
-<td><img src="img/hello-large.png" width="350" height="309" alt="Hello large size" />
-  <br />FYNE_SCALE=2.5</td>
-</tr></table>
+Another option is to use `fyne` command, see [Packaging for mobile](#packaging-for-mobile).
 
-# Themes
+# Installing
 
-Fyne ships with two themes by default, "light" and "dark". You can choose
-which to use with the environment variable ```FYNE_THEME```.
-The default is dark:
+Using `go install` will copy the executable into your go `bin` dir.
+To install the application with icons etc into your operating system's standard
+application location you can use the fyne utility and the "install" subcommand.
 
-<p align="center" markdown="1">
-  <img src="img/hello-normal.png" width="207" height="204" alt="Fyne Hello Dark Theme" />
-</p>
+    go install fyne.io/tools/cmd/fyne@latest
+    fyne install
 
-If you prefer a light theme then you could run:
+# Packaging for mobile
 
-    FYNE_THEME=light go run main.go
+To run on a mobile device it is necessary to package up the application.
+To do this we can use the fyne utility "package" subcommand.
+You will need to add appropriate parameters as prompted, but the basic command is shown below.
+Once packaged you can install using the platform development tools or the fyne "install" subcommand.
 
-It should then look like this:
+    fyne package -os android -appID my.domain.appname
+    fyne install -os android
 
-<p align="center" markdown="1">
-  <img src="img/hello-light.png" width="207" height="204" alt="Fyne Hello Light Theme" />
-</p>
+The built Android application can run either in a real device or an Android emulator.
+However, building for iOS is slightly different.
+If the "-os" argument is "ios", it is build only for a real iOS device.
+Specify "-os" to "iossimulator" allows the application be able to run in an iOS simulator:
 
-# Widget demo
+    fyne package -os ios -appID my.domain.appname
+    fyne package -os iossimulator -appID my.domain.appname
 
-To run a showcase of the features of Fyne execute the following:
+# Preparing a release
 
-    cd $GOPATH/src/fyne.io/fyne/cmd/fyne_demo/
-    go build
-    ./fyne_demo
+Using the fyne utility "release" subcommand you can package up your app for release
+to app stores and market places. Make sure you have the standard build tools installed
+and have followed the platform documentation for setting up accounts and signing.
+Then you can execute something like the following, notice the `-os ios` parameter allows
+building an iOS app from macOS computer. Other combinations work as well :)
 
-And you should see something like this (after you click a few buttons):
+    $ fyne release -os ios -certificate "Apple Distribution" -profile "My App Distribution" -appID "com.example.myapp"
 
-<p align="center" markdown="1" style="max-width: 100%">
-  <img src="img/widgets-dark.png" alt="Fyne Hello Light Theme" style="max-width: 100%" />
-</p>
+The above command will create a '.ipa' file that can then be uploaded to the iOS App Store.
 
-Or if you are using the light theme:
+# Documentation
 
-<p align="center" markdown="1" style="max-width: 100%">
-  <img src="img/widgets-light.png" alt="Fyne Hello Light Theme" />
-</p>
-
-# Declarative API
-
-Fyne also provides a declarative API.
-The following is exactly the same as the code above but in a declarative style.
-
-```go
-package main
-
-import (
-	"fyne.io/fyne"
-	"fyne.io/fyne/app"
-	"fyne.io/fyne/widget"
-)
-
-func main() {
-	app := app.New()
-
-	w := app.NewWindow("Hello")
-	w.SetContent(&widget.Box{Children: []fyne.CanvasObject{
-		&widget.Label{Text: "Hello Fyne!"},
-		&widget.Button{Text: "Quit", OnTapped: func() {
-			app.Quit()
-		}},
-	}})
-
-	w.ShowAndRun()
-}
-```
+More documentation is available at the [Fyne developer website](https://developer.fyne.io/) or on [pkg.go.dev](https://pkg.go.dev/fyne.io/fyne/v2?tab=doc).
 
 # Examples
 
-The main examples have been moved - you can find them in their [own repository](https://github.com/fyne-io/examples/).
+You can find many example applications in the [examples repository](https://github.com/fyne-io/examples/).
+Alternatively a list of applications using fyne can be found at [our website](https://apps.fyne.io/).
 
+# Shipping the Fyne Toolkit
+
+All Fyne apps will work without pre-installed libraries, this is one reason the apps are so portable.
+However, if looking to support Fyne in a bigger way on your operating system then you can install some utilities that help to make a more complete experience.
+
+## Additional apps
+
+It is recommended that you install the following additional apps:
+
+| app           | go install                          | description                                                            |
+| ------------- | ----------------------------------- | ---------------------------------------------------------------------- |
+| fyne_settings | `fyne.io/fyne/v2/cmd/fyne_settings` | A GUI for managing your global Fyne settings like theme and scaling    |
+| apps          | `github.com/fyne-io/apps`           | A graphical installer for the Fyne apps listed at https://apps.fyne.io |
+
+These are optional applications but can help to create a more complete desktop experience.
+
+## FyneDesk (Linux / BSD)
+
+To go all the way with Fyne on your desktop / laptop computer you could install [FyneDesk](https://github.com/fyshos/fynedesk) as well :)
+
+![FyneDesk screenshot in dark mode](https://fyshos.com/img/desktop.png)

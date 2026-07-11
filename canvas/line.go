@@ -4,42 +4,69 @@ import (
 	"image/color"
 	"math"
 
-	"fyne.io/fyne"
+	"fyne.io/fyne/v2"
 )
 
-// Line describes a coloured line primitive in a Fyne canvas.
+// Declare conformity with CanvasObject interface
+var _ fyne.CanvasObject = (*Line)(nil)
+
+// Line describes a colored line primitive in a Fyne canvas.
 // Lines are special as they can have a negative width or height to indicate
 // an inverse slope (i.e. slope up vs down).
 type Line struct {
 	Position1 fyne.Position // The current top-left position of the Line
-	Position2 fyne.Position // The current bottomright position of the Line
+	Position2 fyne.Position // The current bottom-right position of the Line
 	Hidden    bool          // Is this Line currently hidden
 
-	StrokeColor color.Color // The line stroke colour
+	StrokeColor color.Color // The line stroke color
 	StrokeWidth float32     // The stroke width of the line
 }
 
 // Size returns the current size of bounding box for this line object
 func (l *Line) Size() fyne.Size {
-	return fyne.NewSize(int(math.Abs(float64(l.Position2.X)-float64(l.Position1.X))),
-		int(math.Abs(float64(l.Position2.Y)-float64(l.Position1.Y))))
+	return fyne.NewSize(
+		float32(math.Abs(float64(l.Position2.X)-float64(l.Position1.X))),
+		float32(math.Abs(float64(l.Position2.Y)-float64(l.Position1.Y))),
+	)
 }
 
-// Resize sets a new bottom-right position for the line object
+// Resize sets a new bottom-right position for the line object, then it will then be refreshed.
 func (l *Line) Resize(size fyne.Size) {
-	l.Position2 = fyne.NewPos(l.Position1.X+size.Width, l.Position1.Y+size.Height)
+	if size == l.Size() {
+		return
+	}
+
+	if l.Position1.X <= l.Position2.X {
+		l.Position2.X = l.Position1.X + size.Width
+	} else {
+		l.Position1.X = l.Position2.X + size.Width
+	}
+	if l.Position1.Y <= l.Position2.Y {
+		l.Position2.Y = l.Position1.Y + size.Height
+	} else {
+		l.Position1.Y = l.Position2.Y + size.Height
+	}
+	Refresh(l)
 }
 
-// Position gets the current top-left position of this line object, relative to it's parent / canvas
+// Position gets the current top-left position of this line object, relative to its parent / canvas
 func (l *Line) Position() fyne.Position {
 	return fyne.NewPos(fyne.Min(l.Position1.X, l.Position2.X), fyne.Min(l.Position1.Y, l.Position2.Y))
 }
 
-// Move the line object to a new position, relative to it's parent / canvas
+// Move the line object to a new position, relative to its parent / canvas
 func (l *Line) Move(pos fyne.Position) {
-	size := l.Size()
-	l.Position1 = pos
-	l.Position2 = fyne.NewPos(l.Position1.X+size.Width, l.Position1.Y+size.Height)
+	oldPos := l.Position()
+	if oldPos == pos {
+		return
+	}
+
+	deltaX := pos.X - oldPos.X
+	deltaY := pos.Y - oldPos.Y
+
+	l.Position1 = l.Position1.AddXY(deltaX, deltaY)
+	l.Position2 = l.Position2.AddXY(deltaX, deltaY)
+	repaint(l)
 }
 
 // MinSize for a Line simply returns Size{1, 1} as there is no
@@ -57,13 +84,18 @@ func (l *Line) Visible() bool {
 func (l *Line) Show() {
 	l.Hidden = false
 
-	Refresh(l)
+	l.Refresh()
 }
 
 // Hide will set this line to not be visible
 func (l *Line) Hide() {
 	l.Hidden = true
 
+	repaint(l)
+}
+
+// Refresh causes this line to be redrawn with its configured state.
+func (l *Line) Refresh() {
 	Refresh(l)
 }
 

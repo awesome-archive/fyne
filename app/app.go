@@ -1,123 +1,207 @@
 // Package app provides app implementations for working with Fyne graphical interfaces.
 // The fastest way to get started is to call app.New() which will normally load a new desktop application.
 // If the "ci" tag is passed to go (go run -tags ci myapp.go) it will run an in-memory application.
-package app // import "fyne.io/fyne/app"
+package app // import "fyne.io/fyne/v2/app"
 
 import (
-	"os"
-	"sync"
+	"log"
+	"strconv"
+	"time"
 
-	"fyne.io/fyne"
-	"fyne.io/fyne/theme"
-	"fyne.io/fyne/widget"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/internal"
+	"fyne.io/fyne/v2/internal/app"
+	"fyne.io/fyne/v2/internal/build"
+	intRepo "fyne.io/fyne/v2/internal/repository"
+	"fyne.io/fyne/v2/internal/scheduler"
+	"fyne.io/fyne/v2/storage"
+	"fyne.io/fyne/v2/storage/repository"
 )
 
+// Declare conformity with App interface
+var _ fyne.App = (*fyneApp)(nil)
+
 type fyneApp struct {
-	driver fyne.Driver
-	icon   fyne.Resource
+	driver    fyne.Driver
+	clipboard fyne.Clipboard
+	icon      fyne.Resource
+	uniqueID  string
 
-	settings fyne.Settings
-	running  bool
-	runMutex sync.Mutex
+	cache     fyne.Cache
+	cloud     fyne.CloudProvider
+	lifecycle app.Lifecycle
+	settings  *settings
+	storage   fyne.Storage
+	prefs     fyne.Preferences
+	scheduler *scheduler.Scheduler
 }
 
-func (app *fyneApp) Icon() fyne.Resource {
-	return app.icon
+func (a *fyneApp) CloudProvider() fyne.CloudProvider {
+	return a.cloud
 }
 
-func (app *fyneApp) SetIcon(icon fyne.Resource) {
-	app.icon = icon
-}
-
-func (app *fyneApp) NewWindow(title string) fyne.Window {
-	return app.driver.CreateWindow(title)
-}
-
-func (app *fyneApp) Run() {
-	app.runMutex.Lock()
-
-	if app.running {
-		app.runMutex.Unlock()
-		return
+func (a *fyneApp) Icon() fyne.Resource {
+	if a.icon != nil {
+		return a.icon
 	}
 
-	app.running = true
-	app.runMutex.Unlock()
-
-	app.driver.Run()
+	if a.Metadata().Icon == nil || len(a.Metadata().Icon.Content()) == 0 {
+		return nil
+	}
+	return a.Metadata().Icon
 }
 
-func (app *fyneApp) Quit() {
-	for _, window := range app.driver.AllWindows() {
+func (a *fyneApp) SetIcon(icon fyne.Resource) {
+	a.icon = icon
+}
+
+func (a *fyneApp) UniqueID() string {
+	if a.uniqueID != "" {
+		return a.uniqueID
+	}
+	if a.Metadata().ID != "" {
+		return a.Metadata().ID
+	}
+
+	fyne.LogError("Preferences API requires a unique ID, use app.NewWithID() or the FyneApp.toml ID field", nil)
+	a.uniqueID = "missing-id-" + strconv.FormatInt(time.Now().Unix(), 10) // This is a fake unique - it just has to not be reused...
+	return a.uniqueID
+}
+
+func (a *fyneApp) NewWindow(title string) fyne.Window {
+	return a.driver.CreateWindow(title)
+}
+
+func (a *fyneApp) Run() {
+	go a.lifecycle.RunEventQueue(a.driver.DoFromGoroutine)
+
+	if !a.driver.Device().IsMobile() {
+		a.settings.watchSettings()
+	}
+
+	if !build.MigratedToFyneDo() {
+		log.Println("*** This application has not been migrated to the fyne.Do threading model ***")
+		log.Println("*** The next major Fyne release will remove this safety! ***")
+		log.Println("*** Read more at https://docs.fyne.io/started/goroutines ***")
+	}
+	a.driver.Run()
+}
+
+func (a *fyneApp) Quit() {
+	for _, window := range a.driver.AllWindows() {
 		window.Close()
 	}
 
-	app.driver.Quit()
-	app.running = false
+	a.driver.Quit()
+	a.settings.stopWatching()
 }
 
-func (app *fyneApp) Driver() fyne.Driver {
-	return app.driver
+func (a *fyneApp) Driver() fyne.Driver {
+	return a.driver
 }
 
 // Settings returns the application settings currently configured.
-func (app *fyneApp) Settings() fyne.Settings {
-	return app.settings
+func (a *fyneApp) Settings() fyne.Settings {
+	return a.settings
 }
 
-func (app *fyneApp) applyThemeTo(content fyne.CanvasObject, canvas fyne.Canvas) {
-	if themed, ok := content.(fyne.Themeable); ok {
-		themed.ApplyTheme()
-		canvas.Refresh(content)
-	}
-	if wid, ok := content.(fyne.Widget); ok {
-		widget.Renderer(wid).ApplyTheme()
-		canvas.Refresh(content)
+func (a *fyneApp) Storage() fyne.Storage {
+	return a.storage
+}
 
-		for _, o := range widget.Renderer(wid).Objects() {
-			app.applyThemeTo(o, canvas)
+func (a *fyneApp) Preferences() fyne.Preferences {
+	if a.UniqueID() == "" {
+		fyne.LogError("Preferences API requires a unique ID, use app.NewWithID() or the FyneApp.toml ID field", nil)
+	}
+	return a.prefs
+}
+
+func (a *fyneApp) Lifecycle() fyne.Lifecycle {
+	return &a.lifecycle
+}
+
+func (a *fyneApp) newDefaultPreferences() *preferences {
+	p := newPreferences(a)
+	if a.uniqueID != "" {
+		p.load()
+	}
+	return p
+}
+
+func (a *fyneApp) Cache() fyne.Cache {
+	return a.cache
+}
+
+func (a *fyneApp) Clipboard() fyne.Clipboard {
+	return a.clipboard
+}
+
+// New returns a new application instance with the default driver and no unique ID (unless specified in FyneApp.toml)
+func New() fyne.App {
+	if meta.ID == "" {
+		checkLocalMetadata() // if no ID passed, check if it was in toml
+		if meta.ID == "" {
+			internal.LogHint("Applications should be created with a unique ID using app.NewWithID()")
 		}
 	}
-	if c, ok := content.(*fyne.Container); ok {
-		for _, o := range c.Objects {
-			app.applyThemeTo(o, canvas)
+	return NewWithID(meta.ID)
+}
+
+func makeStoreDocs(id string, s *store) *internal.Docs {
+	if id == "" {
+		return &internal.Docs{} // an empty impl to avoid crashes
+	}
+	if root := s.a.storageRoot(); root != "" {
+		uri, err := storage.ParseURI(root)
+		if err != nil {
+			uri = storage.NewFileURI(root)
 		}
-		canvas.Refresh(c)
-	}
-}
 
-func (app *fyneApp) applyTheme() {
-	for _, window := range app.driver.AllWindows() {
-		window.Content().Move(fyne.NewPos(theme.Padding(), theme.Padding()))
-		app.applyThemeTo(window.Content(), window.Canvas())
-	}
-}
+		exists, err := storage.Exists(uri)
+		if !exists || err != nil {
+			err = storage.CreateListable(uri)
+			if err != nil {
+				fyne.LogError("Failed to create app storage space", err)
+			}
+		}
 
-func (app *fyneApp) setupTheme() {
-	env := os.Getenv("FYNE_THEME")
-	if env == "light" {
-		app.Settings().SetTheme(theme.LightTheme())
+		root, _ := s.docRootURI()
+		return &internal.Docs{RootDocURI: root}
 	} else {
-		app.Settings().SetTheme(theme.DarkTheme())
+		return &internal.Docs{} // an empty impl to avoid crashes
 	}
 }
 
-// NewAppWithDriver initialises a new Fyne application using the specified
-// driver and returns a handle to that App.
-// Built in drivers are provided in the "driver" package.
-func NewAppWithDriver(d fyne.Driver) fyne.App {
-	newApp := &fyneApp{driver: d, icon: theme.FyneLogo(), settings: loadSettings()}
+func newAppWithDriver(d fyne.Driver, clipboard fyne.Clipboard, id string) fyne.App {
+	newApp := &fyneApp{uniqueID: id, clipboard: clipboard, driver: d}
 	fyne.SetCurrentApp(newApp)
-	newApp.setupTheme()
 
-	listener := make(chan fyne.Settings)
-	newApp.Settings().AddChangeListener(listener)
-	go func() {
-		for {
-			<-listener
-			newApp.applyTheme()
+	newApp.prefs = newApp.newDefaultPreferences()
+	newApp.lifecycle.InitEventQueue()
+	newApp.lifecycle.SetOnStoppedHookExecuted(func() {
+		if prefs, ok := newApp.prefs.(*preferences); ok {
+			prefs.forceImmediateSave()
 		}
-	}()
+	})
 
+	newApp.registerRepositories() // for web this may provide docs / settings
+	newApp.cache = makeCache(newApp)
+	newApp.scheduler = scheduler.New(newApp.cache, newApp.SendNotification)
+	newApp.scheduler.Start()
+	newApp.settings = loadSettings()
+	store := &store{a: newApp}
+	store.Docs = makeStoreDocs(id, store)
+	newApp.storage = store
+
+	httpHandler := intRepo.NewHTTPRepository()
+	repository.Register("http", httpHandler)
+	repository.Register("https", httpHandler)
 	return newApp
+}
+
+// marker interface to pass system tray to supporting drivers
+type systrayDriver interface {
+	SetSystemTrayMenu(*fyne.Menu)
+	SetSystemTrayIcon(fyne.Resource)
+	SetSystemTrayWindow(fyne.Window)
 }

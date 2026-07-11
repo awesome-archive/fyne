@@ -51,7 +51,31 @@ type Window interface {
 	// If none is set should return the application icon.
 	SetIcon(Resource)
 
+	// SetMaster indicates that closing this window should exit the app
+	SetMaster()
+
+	// MainMenu gets the content of the window's top level menu.
+	MainMenu() *MainMenu
+
+	// SetMainMenu adds a top level menu to this window.
+	// The way this is rendered will depend on the loaded driver.
+	SetMainMenu(*MainMenu)
+
+	// SetOnClosed sets a function that runs when the window is closed.
 	SetOnClosed(func())
+
+	// SetCloseIntercept sets a function that runs instead of closing if defined.
+	// [Window.Close] should be called explicitly in the interceptor to close the window.
+	//
+	// Since: 1.4
+	SetCloseIntercept(func())
+
+	// SetOnDropped allows setting a window-wide callback to receive dropped items.
+	// The callback function is called with the absolute position of the drop and a
+	// slice of all of the dropped URIs.
+	//
+	// Since 2.4
+	SetOnDropped(func(Position, []URI))
 
 	// Show the window on screen.
 	Show()
@@ -59,7 +83,9 @@ type Window interface {
 	// This will not destroy the window or cause the app to exit.
 	Hide()
 	// Close the window.
-	// If it is the only open window, or the "master" window the app will Quit.
+	// If it is he "master" window the app will Quit.
+	// If it is the only open window and no menu is set via [desktop.App]
+	// SetSystemTrayMenu the app will also Quit.
 	Close()
 
 	// ShowAndRun is a shortcut to show the window and then run the application.
@@ -74,6 +100,8 @@ type Window interface {
 	// This can be useful to set a key handler for the window, for example.
 	Canvas() Canvas
 
-	//Clipboard returns the system clipboard
+	// Clipboard returns the system clipboard
+	//
+	// Deprecated: use App.Clipboard() instead.
 	Clipboard() Clipboard
 }

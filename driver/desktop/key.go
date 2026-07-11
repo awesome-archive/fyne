@@ -1,10 +1,12 @@
 package desktop
 
 import (
-	"fyne.io/fyne"
+	"fyne.io/fyne/v2"
 )
 
 const (
+	// KeyNone represents no key
+	KeyNone fyne.KeyName = ""
 	// KeyShiftLeft represents the left shift key
 	KeyShiftLeft fyne.KeyName = "LeftShift"
 	// KeyShiftRight represents the right shift key
@@ -23,20 +25,35 @@ const (
 	KeySuperRight fyne.KeyName = "RightSuper"
 	// KeyMenu represents the left or right menu / application key
 	KeyMenu fyne.KeyName = "Menu"
+	// KeyPrintScreen represents the key used to cause a screen capture
+	KeyPrintScreen fyne.KeyName = "PrintScreen"
+
+	// KeyCapsLock represents the caps lock key, tapping once is the down event then again is the up
+	KeyCapsLock fyne.KeyName = "CapsLock"
 )
 
-// Modifier captures any key modifiers (shift etc) pressed during this key event
-type Modifier int
+// Modifier captures any key modifiers (shift etc.) pressed during a key event
+//
+// Deprecated: Use fyne.KeyModifier instead.
+type Modifier = fyne.KeyModifier
 
 const (
 	// ShiftModifier represents a shift key being held
-	ShiftModifier Modifier = 1 << iota
+	//
+	// Deprecated: Use fyne.KeyModifierShift instead.
+	ShiftModifier = fyne.KeyModifierShift
 	// ControlModifier represents the ctrl key being held
-	ControlModifier
+	//
+	// Deprecated: Use fyne.KeyModifierControl instead.
+	ControlModifier = fyne.KeyModifierControl
 	// AltModifier represents either alt keys being held
-	AltModifier
+	//
+	// Deprecated: Use fyne.KeyModifierAlt instead.
+	AltModifier = fyne.KeyModifierAlt
 	// SuperModifier represents either super keys being held
-	SuperModifier
+	//
+	// Deprecated: Use fyne.KeyModifierSuper instead.
+	SuperModifier = fyne.KeyModifierSuper
 )
 
 // Keyable describes any focusable canvas object that can accept desktop key events.

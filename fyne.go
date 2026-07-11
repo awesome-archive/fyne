@@ -5,21 +5,24 @@
 //
 // A simple application may look like this:
 //
-//   package main
+//	package main
 //
-//   import "fyne.io/fyne/app"
-//   import "fyne.io/fyne/widget"
+//	import "fyne.io/fyne/v2/app"
+//	import "fyne.io/fyne/v2/container"
+//	import "fyne.io/fyne/v2/widget"
 //
-//   func main() {
-//   	a := app.New()
+//	func main() {
+//		a := app.New()
+//		w := a.NewWindow("Hello")
 //
-//   	w := a.NewWindow("Hello")
-//   	w.SetContent(widget.NewVBox(
-//   		widget.NewLabel("Hello Fyne!"),
-//   		widget.NewButton("Quit", func() {
-//   			a.Quit()
-//   		})))
+//		hello := widget.NewLabel("Hello Fyne!")
+//		w.SetContent(container.NewVBox(
+//			hello,
+//			widget.NewButton("Hi!", func() {
+//				hello.SetText("Welcome :)")
+//			}),
+//		))
 //
-//   	w.ShowAndRun()
-//   }
-package fyne // import "fyne.io/fyne"
+//		w.ShowAndRun()
+//	}
+package fyne // import "fyne.io/fyne/v2"

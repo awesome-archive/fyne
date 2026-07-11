@@ -1,114 +1,83 @@
 package widget
 
 import (
-	"image/color"
-
-	"fyne.io/fyne"
-	"fyne.io/fyne/canvas"
-	"fyne.io/fyne/theme"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/internal/widget"
+	"fyne.io/fyne/v2/theme"
 )
 
 type iconRenderer struct {
-	objects []fyne.CanvasObject
+	widget.BaseRenderer
+	raster *canvas.Image
 
 	image *Icon
 }
 
 func (i *iconRenderer) MinSize() fyne.Size {
-	size := theme.IconInlineSize()
-	return fyne.NewSize(size, size)
+	return fyne.NewSquareSize(i.image.Theme().Size(theme.SizeNameInlineIcon))
 }
 
 func (i *iconRenderer) Layout(size fyne.Size) {
-	if len(i.objects) == 0 {
+	if len(i.Objects()) == 0 {
 		return
 	}
 
-	i.objects[0].Resize(size)
-}
-
-func (i *iconRenderer) Objects() []fyne.CanvasObject {
-	return i.objects
-}
-
-func (i *iconRenderer) ApplyTheme() {
-	i.Refresh()
-}
-
-func (i *iconRenderer) BackgroundColor() color.Color {
-	return color.Transparent
+	i.Objects()[0].Resize(size)
 }
 
 func (i *iconRenderer) Refresh() {
-	i.objects = nil
-
-	if i.image.Resource != nil {
-		raster := canvas.NewImageFromResource(i.image.Resource)
-		raster.FillMode = canvas.ImageFillContain
-
-		i.objects = append(i.objects, raster)
+	if i.image.Resource == i.image.cachedRes {
+		return
 	}
-	i.Layout(i.image.Size())
 
-	canvas.Refresh(i.image)
-}
+	i.raster.Resource = i.image.Resource
+	i.image.cachedRes = i.image.Resource
 
-func (i *iconRenderer) Destroy() {
+	if i.image.Resource == nil {
+		i.raster.Image = nil // reset the internal caching too...
+	}
+
+	i.raster.Refresh()
 }
 
 // Icon widget is a basic image component that load's its resource to match the theme.
 type Icon struct {
-	baseWidget
+	BaseWidget
 
-	Resource fyne.Resource // The resource for this icon
-}
-
-// Resize sets a new size for a widget.
-// Note this should not be used if the widget is being managed by a Layout within a Container.
-func (i *Icon) Resize(size fyne.Size) {
-	i.resize(size, i)
-}
-
-// Move the widget to a new position, relative to it's parent.
-// Note this should not be used if the widget is being managed by a Layout within a Container.
-func (i *Icon) Move(pos fyne.Position) {
-	i.move(pos, i)
-}
-
-// MinSize returns the smallest size this widget can shrink to
-func (i *Icon) MinSize() fyne.Size {
-	return i.minSize(i)
-}
-
-// Show this widget, if it was previously hidden
-func (i *Icon) Show() {
-	i.show(i)
-}
-
-// Hide this widget, if it was previously visible
-func (i *Icon) Hide() {
-	i.hide(i)
+	Resource  fyne.Resource // The resource for this icon
+	cachedRes fyne.Resource
 }
 
 // SetResource updates the resource rendered in this icon widget
 func (i *Icon) SetResource(res fyne.Resource) {
 	i.Resource = res
-
-	Refresh(i)
+	i.Refresh()
 }
 
-// CreateRenderer is a private method to Fyne which links this widget to it's renderer
+// MinSize returns the size that this widget should not shrink below
+func (i *Icon) MinSize() fyne.Size {
+	i.ExtendBaseWidget(i)
+	return i.BaseWidget.MinSize()
+}
+
+// CreateRenderer is a private method to Fyne which links this widget to its renderer
 func (i *Icon) CreateRenderer() fyne.WidgetRenderer {
-	render := &iconRenderer{image: i}
+	i.ExtendBaseWidget(i)
 
-	render.objects = []fyne.CanvasObject{}
+	img := canvas.NewImageFromResource(i.Resource)
+	img.FillMode = canvas.ImageFillContain
 
-	return render
+	r := &iconRenderer{image: i, raster: img}
+	r.SetObjects([]fyne.CanvasObject{img})
+	i.cachedRes = i.Resource
+	return r
 }
 
 // NewIcon returns a new icon widget that displays a themed icon resource
 func NewIcon(res fyne.Resource) *Icon {
 	icon := &Icon{}
+	icon.ExtendBaseWidget(icon)
 	icon.SetResource(res) // force the image conversion
 
 	return icon

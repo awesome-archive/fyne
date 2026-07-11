@@ -1,10 +1,10 @@
 package widget
 
 import (
-	"fyne.io/fyne"
-	"fyne.io/fyne/canvas"
-	"fyne.io/fyne/layout"
-	"fyne.io/fyne/theme"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/internal/widget"
+	"fyne.io/fyne/v2/layout"
 )
 
 // ToolbarItem represents any interface element that can be added to a toolbar
@@ -15,24 +15,59 @@ type ToolbarItem interface {
 // ToolbarAction is push button style of ToolbarItem
 type ToolbarAction struct {
 	Icon        fyne.Resource
-	OnActivated func()
+	OnActivated func() `json:"-"`
+	button      Button
 }
 
 // ToolbarObject gets a button to render this ToolbarAction
 func (t *ToolbarAction) ToolbarObject() fyne.CanvasObject {
-	return NewButtonWithIcon("", t.Icon, t.OnActivated)
+	t.button.Importance = LowImportance
+
+	// synchronize properties
+	t.button.Icon = t.Icon
+	t.button.OnTapped = t.OnActivated
+
+	return &t.button
+}
+
+// SetIcon updates the icon on a ToolbarItem
+//
+// Since: 2.2
+func (t *ToolbarAction) SetIcon(icon fyne.Resource) {
+	t.Icon = icon
+	t.button.SetIcon(t.Icon)
+}
+
+// Enable this ToolbarAction, updating any style or features appropriately.
+//
+// Since: 2.5
+func (t *ToolbarAction) Enable() {
+	t.button.Enable()
+}
+
+// Disable this ToolbarAction so that it cannot be interacted with, updating any style appropriately.
+//
+// Since: 2.5
+func (t *ToolbarAction) Disable() {
+	t.button.Disable()
+}
+
+// Disabled returns true if this ToolbarAction is currently disabled or false if it can currently be interacted with.
+//
+// Since: 2.5
+func (t *ToolbarAction) Disabled() bool {
+	return t.button.Disabled()
 }
 
 // NewToolbarAction returns a new push button style ToolbarItem
-func NewToolbarAction(icon fyne.Resource, onActivated func()) ToolbarItem {
-	return &ToolbarAction{icon, onActivated}
+func NewToolbarAction(icon fyne.Resource, onActivated func()) *ToolbarAction {
+	return &ToolbarAction{Icon: icon, OnActivated: onActivated}
 }
 
 // ToolbarSpacer is a blank, stretchable space for a toolbar.
 // This is typically used to assist layout if you wish some left and some right aligned items.
 // Space will be split evebly amongst all the spacers on a toolbar.
-type ToolbarSpacer struct {
-}
+type ToolbarSpacer struct{}
 
 // ToolbarObject gets the actual spacer object for this ToolbarSpacer
 func (t *ToolbarSpacer) ToolbarObject() fyne.CanvasObject {
@@ -40,117 +75,89 @@ func (t *ToolbarSpacer) ToolbarObject() fyne.CanvasObject {
 }
 
 // NewToolbarSpacer returns a new spacer item for a Toolbar to assist with ToolbarItem alignment
-func NewToolbarSpacer() ToolbarItem {
+func NewToolbarSpacer() *ToolbarSpacer {
 	return &ToolbarSpacer{}
 }
 
 // ToolbarSeparator is a thin, visible divide that can be added to a Toolbar.
 // This is typically used to assist visual grouping of ToolbarItems.
-type ToolbarSeparator struct {
-}
+type ToolbarSeparator struct{}
 
 // ToolbarObject gets the visible line object for this ToolbarSeparator
 func (t *ToolbarSeparator) ToolbarObject() fyne.CanvasObject {
-	return canvas.NewRectangle(theme.TextColor())
+	return &Separator{invert: true}
 }
 
 // NewToolbarSeparator returns a new separator item for a Toolbar to assist with ToolbarItem grouping
-func NewToolbarSeparator() ToolbarItem {
+func NewToolbarSeparator() *ToolbarSeparator {
 	return &ToolbarSeparator{}
 }
 
 // Toolbar widget creates a horizontal list of tool buttons
 type Toolbar struct {
-	baseWidget
-
+	BaseWidget
 	Items []ToolbarItem
-
-	box *Box
 }
 
-// Resize sets a new size for a widget.
-// Note this should not be used if the widget is being managed by a Layout within a Container.
-func (t *Toolbar) Resize(size fyne.Size) {
-	t.resize(size, t)
-}
-
-// Move the widget to a new position, relative to it's parent.
-// Note this should not be used if the widget is being managed by a Layout within a Container.
-func (t *Toolbar) Move(pos fyne.Position) {
-	t.move(pos, t)
-}
-
-// MinSize returns the smallest size this widget can shrink to
-func (t *Toolbar) MinSize() fyne.Size {
-	return t.minSize(t)
-}
-
-// Show this widget, if it was previously hidden
-func (t *Toolbar) Show() {
-	t.show(t)
-}
-
-// Hide this widget, if it was previously visible
-func (t *Toolbar) Hide() {
-	t.hide(t)
-}
-
-func (t *Toolbar) append(item ToolbarItem) {
-	if t.box == nil { // TODO fix smell
-		Renderer(t)
-	}
-
-	t.box.Append(item.ToolbarObject())
-}
-
-func (t *Toolbar) prepend(item ToolbarItem) {
-	if t.box == nil { // TODO fix smell
-		Renderer(t)
-	}
-
-	t.box.Prepend(item.ToolbarObject())
-}
-
-// CreateRenderer is a private method to Fyne which links this widget to it's renderer
+// CreateRenderer is a private method to Fyne which links this widget to its renderer
 func (t *Toolbar) CreateRenderer() fyne.WidgetRenderer {
-	t.box = NewHBox()
-	t.box.setBackgroundColor(theme.ButtonColor())
-	for _, item := range t.Items {
-		t.append(item)
-	}
-	return Renderer(t.box)
-}
-
-// ApplyTheme updates this widget's visuals to reflect the current theme
-func (t *Toolbar) ApplyTheme() {
-	t.box.setBackgroundColor(theme.ButtonColor())
-
-	for i, item := range t.Items {
-		if _, ok := item.(*ToolbarSeparator); ok {
-			rect := Renderer(t).(*boxRenderer).objects[i].(*canvas.Rectangle)
-			rect.FillColor = theme.TextColor()
-		}
-	}
+	t.ExtendBaseWidget(t)
+	r := &toolbarRenderer{toolbar: t, layout: layout.NewHBoxLayout()}
+	r.resetObjects()
+	return r
 }
 
 // Append a new ToolbarItem to the end of this Toolbar
 func (t *Toolbar) Append(item ToolbarItem) {
 	t.Items = append(t.Items, item)
-
-	t.append(item)
+	t.Refresh()
 }
 
 // Prepend a new ToolbarItem to the start of this Toolbar
 func (t *Toolbar) Prepend(item ToolbarItem) {
 	t.Items = append([]ToolbarItem{item}, t.Items...)
+	t.Refresh()
+}
 
-	t.prepend(item)
+// MinSize returns the size that this widget should not shrink below
+func (t *Toolbar) MinSize() fyne.Size {
+	t.ExtendBaseWidget(t)
+	return t.BaseWidget.MinSize()
 }
 
 // NewToolbar creates a new toolbar widget.
 func NewToolbar(items ...ToolbarItem) *Toolbar {
 	t := &Toolbar{Items: items}
+	t.ExtendBaseWidget(t)
 
-	Renderer(t).Layout(t.MinSize())
+	t.Refresh()
 	return t
+}
+
+type toolbarRenderer struct {
+	widget.BaseRenderer
+	layout  fyne.Layout
+	items   []fyne.CanvasObject
+	toolbar *Toolbar
+}
+
+func (r *toolbarRenderer) MinSize() fyne.Size {
+	return r.layout.MinSize(r.items)
+}
+
+func (r *toolbarRenderer) Layout(size fyne.Size) {
+	r.layout.Layout(r.items, size)
+}
+
+func (r *toolbarRenderer) Refresh() {
+	r.resetObjects()
+	canvas.Refresh(r.toolbar)
+}
+
+func (r *toolbarRenderer) resetObjects() {
+	r.items = make([]fyne.CanvasObject, 0, len(r.toolbar.Items))
+	for _, item := range r.toolbar.Items {
+		r.items = append(r.items, item.ToolbarObject())
+	}
+	r.SetObjects(r.items)
 }

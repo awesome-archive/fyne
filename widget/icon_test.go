@@ -1,37 +1,35 @@
-package widget
+package widget_test
 
 import (
 	"testing"
 
-	"fyne.io/fyne/canvas"
-	"fyne.io/fyne/theme"
-	"github.com/stretchr/testify/assert"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/test"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 )
 
-func TestNewIcon(t *testing.T) {
-	icon := NewIcon(theme.ConfirmIcon())
-	render := Renderer(icon)
+func TestIcon_Layout(t *testing.T) {
+	test.NewTempApp(t)
 
-	assert.Equal(t, 1, len(render.Objects()))
-	obj := render.Objects()[0]
-	img, ok := obj.(*canvas.Image)
-	if !ok {
-		t.Fail()
+	for name, tt := range map[string]struct {
+		resource fyne.Resource
+	}{
+		"empty": {},
+		"resource": {
+			resource: theme.CancelIcon(),
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			icon := &widget.Icon{
+				Resource: tt.resource,
+			}
+
+			window := test.NewTempWindow(t, &fyne.Container{Layout: layout.NewCenterLayout(), Objects: []fyne.CanvasObject{icon}})
+			window.Resize(icon.MinSize().Max(fyne.NewSize(150, 200)))
+
+			test.AssertRendersToMarkup(t, "icon/layout_"+name+".xml", window.Canvas())
+		})
 	}
-	assert.Equal(t, theme.ConfirmIcon(), img.Resource)
-}
-
-func TestIcon_Nil(t *testing.T) {
-	icon := NewIcon(nil)
-	render := Renderer(icon)
-
-	assert.Equal(t, 0, len(render.Objects()))
-}
-
-func TestIcon_MinSize(t *testing.T) {
-	icon := NewIcon(theme.CancelIcon())
-	min := icon.MinSize()
-
-	assert.Equal(t, theme.IconInlineSize(), min.Width)
-	assert.Equal(t, theme.IconInlineSize(), min.Height)
 }

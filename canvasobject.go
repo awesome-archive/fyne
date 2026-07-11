@@ -9,52 +9,99 @@ package fyne
 // Resize(Size) or Move(Position).
 type CanvasObject interface {
 	// geometry
-	Size() Size
-	Resize(Size)
-	Position() Position
-	Move(Position)
+
+	// MinSize returns the minimum size this object needs to be drawn.
 	MinSize() Size
+	// Move moves this object to the given position relative to its parent.
+	// This should only be called if your object is not in a container with a layout manager.
+	Move(Position)
+	// Position returns the current position of the object relative to its parent.
+	Position() Position
+	// Resize resizes this object to the given size.
+	// This should only be called if your object is not in a container with a layout manager.
+	Resize(Size)
+	// Size returns the current size of this object.
+	Size() Size
 
 	// visibility
-	Visible() bool
-	Show()
+
+	// Hide hides this object.
 	Hide()
+	// Visible returns whether this object is visible or not.
+	Visible() bool
+	// Show shows this object.
+	Show()
+
+	// Refresh must be called if this object should be redrawn because its inner state changed.
+	Refresh()
 }
 
-// Themeable indicates that the associated CanvasObject responds to theme
-// changes. When the settings detect a theme change the object will be informed
-// through the invocation of ApplyTheme().
-type Themeable interface {
-	ApplyTheme()
+// Disableable describes any [CanvasObject] that can be disabled.
+// This is primarily used with objects that also implement the Tappable interface.
+type Disableable interface {
+	Enable()
+	Disable()
+	Disabled() bool
 }
 
-// Tappable describes any CanvasObject that can also be tapped.
-// This should be implemented by buttons etc that wish to handle pointer interactions.
-type Tappable interface {
-	Tapped(*PointEvent)
-	TappedSecondary(*PointEvent)
+// DoubleTappable describes any [CanvasObject] that can also be double tapped.
+type DoubleTappable interface {
+	DoubleTapped(*PointEvent)
 }
 
-// Scrollable describes any CanvasObject that can also be scrolled.
+// Draggable indicates that a [CanvasObject] can be dragged.
+// This is used for any item that the user has indicated should be moved across the screen.
+type Draggable interface {
+	Dragged(*DragEvent)
+	DragEnd()
+}
+
+// Focusable describes any [CanvasObject] that can respond to being focused.
+// It will receive the FocusGained and FocusLost events appropriately.
+// When focused it will also have TypedRune called as text is input and
+// TypedKey called when other keys are pressed.
+//
+// Note: You must not change canvas state (including overlays or focus) in FocusGained or FocusLost
+// or you would end up with a dead-lock.
+type Focusable interface {
+	// FocusGained is a hook called by the focus handling logic after this object gained the focus.
+	FocusGained()
+	// FocusLost is a hook called by the focus handling logic after this object lost the focus.
+	FocusLost()
+
+	// TypedRune is a hook called by the input handling logic on text input events if this object is focused.
+	TypedRune(rune)
+	// TypedKey is a hook called by the input handling logic on key events if this object is focused.
+	TypedKey(*KeyEvent)
+}
+
+// Scrollable describes any [CanvasObject] that can also be scrolled.
 // This is mostly used to implement the widget.ScrollContainer.
 type Scrollable interface {
 	Scrolled(*ScrollEvent)
 }
 
-// Focusable describes any CanvasObject that can respond to being focused.
-// It will receive the FocusGained and FocusLost events appropriately.
-// When focused it will also have TypedRune called as text is input and
-// TypedKey called when other keys are pressed.
-type Focusable interface {
-	FocusGained()
-	FocusLost()
-	Focused() bool
-
-	TypedRune(rune)
-	TypedKey(*KeyEvent)
+// SecondaryTappable describes a [CanvasObject] that can be right-clicked or long-tapped.
+type SecondaryTappable interface {
+	TappedSecondary(*PointEvent)
 }
 
-// Shortcutable describes any CanvasObject that can respond to shortcut commands (quit, cut, copy, and paste).
+// Shortcutable describes any [CanvasObject] that can respond to shortcut commands (quit, cut, copy, and paste).
 type Shortcutable interface {
-	TypedShortcut(shortcut Shortcut) bool
+	TypedShortcut(Shortcut)
+}
+
+// Tabbable describes any object that needs to accept the Tab key presses.
+//
+// Since: 2.1
+type Tabbable interface {
+	// AcceptsTab is a hook called by the key press handling logic.
+	// If it returns true then the Tab key events will be sent using TypedKey.
+	AcceptsTab() bool
+}
+
+// Tappable describes any [CanvasObject] that can also be tapped.
+// This should be implemented by buttons etc that wish to handle pointer interactions.
+type Tappable interface {
+	Tapped(*PointEvent)
 }

@@ -1,88 +1,50 @@
 // Run a command line helper for various Fyne tools.
+//
+// Deprecated: Install fyne.io/tools/cmd/fyne for latest version.
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
+	"runtime/debug"
+
+	"fyne.io/fyne/v2/cmd/fyne/internal/commands"
+	"github.com/urfave/cli/v2"
 )
 
-var commands map[string]command
-var provider command
-
-func printUsage() {
-	fmt.Println("Usage: fyne [command] [parameters], where command is one of:")
-	fmt.Print("  ")
-
-	i := 0
-	for id := range commands {
-		fmt.Print(id)
-
-		if i < len(commands)-1 {
-			fmt.Print(", ")
-		}
-		i++
-	}
-
-	fmt.Println(" or help")
-	fmt.Println()
-
-	if provider != nil {
-		provider.printHelp(" ")
-	} else {
-		for id, provider := range commands {
-			fmt.Printf("  %s\n", id)
-			provider.printHelp("   ")
-			fmt.Printf("    For more information run \"fyne help %s\"\n", id)
-			fmt.Println("")
-		}
-	}
-	flag.PrintDefaults()
-}
-
-func help() {
-	printUsage()
-	os.Exit(2) // consistent with flag.Parse() with -help
-}
-
-func loadCommands() {
-	commands = make(map[string]command)
-
-	commands["bundle"] = &bundler{}
-	commands["package"] = &packager{}
-}
-
 func main() {
-	loadCommands()
-	flag.Usage = printUsage
-	// first let's extract the first "command"
-	args := os.Args[1:]
-	if len(args) < 1 {
-		help()
+	fmt.Println("NOTE: This tool is deprecated and has migrated to fyne.io/tools/cmd/fyne.")
+	fmt.Println("The new tool can be installed by running the following command:\n\tgo install fyne.io/tools/cmd/fyne@latest")
+
+	app := &cli.App{
+		Name:        "fyne",
+		Usage:       "A command line helper for various Fyne tools.",
+		Description: "The fyne command provides tooling for fyne applications and to assist in their development.",
+		Commands: []*cli.Command{
+			commands.Bundle(),
+			commands.Env(),
+			commands.Get(),
+			commands.Install(),
+			commands.Package(),
+			commands.Release(),
+			commands.Version(),
+			commands.Serve(),
+			commands.Translate(),
+			commands.Build(),
+
+			// Deprecated: Use "go mod vendor" instead.
+			commands.Vendor(), //lint:ignore SA1019 This whole tool is deprecated.
+		},
 	}
 
-	command := args[0]
-	if command[0] == '-' { // there was a parameter instead of a command
-		help()
-	}
-
-	if command == "help" {
-		if len(args) >= 2 {
-			provider = commands[args[1]]
-			provider.addFlags()
-		}
-		help()
+	if info, ok := debug.ReadBuildInfo(); !ok {
+		app.Version = "could not retrieve version information (ensure module support is activated and build again)"
 	} else {
-		provider = commands[command]
-		if provider == nil {
-			fmt.Fprintln(os.Stderr, "Unsupported command", command)
-			return
-		}
+		app.Version = info.Main.Version
+	}
 
-		provider.addFlags()
-
-		// then parse the remaining args
-		flag.CommandLine.Parse(args[1:])
-		provider.run(flag.Args())
+	if err := app.Run(os.Args); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }

@@ -1,34 +1,40 @@
 package widget
 
 import (
-	"fmt"
 	"image/color"
+	"strconv"
 
-	"fyne.io/fyne"
-	"fyne.io/fyne/canvas"
-	"fyne.io/fyne/theme"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/data/binding"
+	col "fyne.io/fyne/v2/internal/color"
+	"fyne.io/fyne/v2/internal/widget"
+	"fyne.io/fyne/v2/theme"
 )
 
-const defaultText = "%d%%"
-
 type progressRenderer struct {
-	objects []fyne.CanvasObject
-
-	bar   *canvas.Rectangle
-	label *canvas.Text
-
-	progress *ProgressBar
+	widget.BaseRenderer
+	background, bar canvas.Rectangle
+	label           canvas.Text
+	ratio           float32
+	progress        *ProgressBar
 }
 
 // MinSize calculates the minimum size of a progress bar.
 // This is simply the "100%" label size plus padding.
 func (p *progressRenderer) MinSize() fyne.Size {
-	text := textMinSize("100%", p.label.TextSize, p.label.TextStyle)
+	text := "100%"
+	if format := p.progress.TextFormatter; format != nil {
+		text = format()
+	}
 
-	return fyne.NewSize(text.Width+theme.Padding()*4, text.Height+theme.Padding()*2)
+	th := p.progress.Theme()
+	padding := th.Size(theme.SizeNameInnerPadding) * 2
+	size := fyne.MeasureText(text, p.label.TextSize, p.label.TextStyle)
+	return size.AddWidthHeight(padding, padding)
 }
 
-func (p *progressRenderer) updateBar() {
+func (p *progressRenderer) calculateRatio() {
 	if p.progress.Value < p.progress.Min {
 		p.progress.Value = p.progress.Min
 	}
@@ -36,105 +42,157 @@ func (p *progressRenderer) updateBar() {
 		p.progress.Value = p.progress.Max
 	}
 
-	delta := float32(p.progress.Max - p.progress.Min)
-	ratio := float32(p.progress.Value-p.progress.Min) / float32(delta)
-
-	p.label.Text = fmt.Sprintf(defaultText, int(ratio*100))
-
-	size := p.progress.Size()
-	p.bar.Resize(fyne.NewSize(int(float32(size.Width)*ratio), size.Height))
+	delta := p.progress.Max - p.progress.Min
+	p.ratio = float32((p.progress.Value - p.progress.Min) / delta)
 }
 
-// Layout the components of the check widget
+func (p *progressRenderer) updateBar() {
+	p.Layout(p.progress.Size()) // Make sure that bar length updates.
+
+	// Don't draw rectangles when they can't be seen.
+	p.background.Hidden = p.ratio == 1.0
+	p.bar.Hidden = p.ratio == 0.0
+
+	if text := p.progress.TextFormatter; text != nil {
+		p.label.Text = text()
+		return
+	}
+
+	p.label.Text = strconv.Itoa(int(p.ratio*100)) + "%"
+}
+
+// Layout the components of the progress bar widget
 func (p *progressRenderer) Layout(size fyne.Size) {
+	p.calculateRatio()
+
+	p.bar.Resize(fyne.NewSize(size.Width*p.ratio, size.Height))
+	p.background.Resize(size)
 	p.label.Resize(size)
-	p.updateBar()
 }
 
-// ApplyTheme is called when the progress bar may need to update it's look
-func (p *progressRenderer) ApplyTheme() {
-	p.bar.FillColor = theme.PrimaryColor()
-	p.label.Color = theme.TextColor()
+// applyTheme updates the progress bar to match the current theme
+func (p *progressRenderer) applyTheme() {
+	th := p.progress.Theme()
+	v := fyne.CurrentApp().Settings().ThemeVariant()
 
-	p.Refresh()
-}
+	primaryColor := th.Color(theme.ColorNamePrimary, v)
+	inputRadius := th.Size(theme.SizeNameInputRadius)
 
-func (p *progressRenderer) BackgroundColor() color.Color {
-	return theme.ButtonColor()
+	p.background.FillColor = progressBlendColor(primaryColor)
+	p.background.CornerRadius = inputRadius
+	p.bar.FillColor = primaryColor
+	p.bar.CornerRadius = inputRadius
+	p.label.Color = th.Color(theme.ColorNameForegroundOnPrimary, v)
+	p.label.TextSize = th.Size(theme.SizeNameText)
 }
 
 func (p *progressRenderer) Refresh() {
+	p.applyTheme()
 	p.updateBar()
-
-	canvas.Refresh(p.progress)
-}
-
-func (p *progressRenderer) Objects() []fyne.CanvasObject {
-	return p.objects
-}
-
-func (p *progressRenderer) Destroy() {
+	p.background.Refresh()
+	p.bar.Refresh()
+	p.label.Refresh()
+	canvas.Refresh(p.progress.super())
 }
 
 // ProgressBar widget creates a horizontal panel that indicates progress
 type ProgressBar struct {
-	baseWidget
+	BaseWidget
 
 	Min, Max, Value float64
+
+	// TextFormatter can be used to have a custom format of progress text.
+	// If set, it overrides the percentage readout and runs each time the value updates.
+	//
+	// Since: 1.4
+	TextFormatter func() string `json:"-"`
+
+	binder basicBinder
 }
 
-// Resize sets a new size for a widget.
-// Note this should not be used if the widget is being managed by a Layout within a Container.
-func (p *ProgressBar) Resize(size fyne.Size) {
-	p.resize(size, p)
-}
-
-// Move the widget to a new position, relative to it's parent.
-// Note this should not be used if the widget is being managed by a Layout within a Container.
-func (p *ProgressBar) Move(pos fyne.Position) {
-	p.move(pos, p)
-}
-
-// MinSize returns the smallest size this widget can shrink to
-func (p *ProgressBar) MinSize() fyne.Size {
-	return p.minSize(p)
-}
-
-// Show this widget, if it was previously hidden
-func (p *ProgressBar) Show() {
-	p.show(p)
-}
-
-// Hide this widget, if it was previously visible
-func (p *ProgressBar) Hide() {
-	p.hide(p)
+// Bind connects the specified data source to this ProgressBar.
+// The current value will be displayed and any changes in the data will cause the widget to update.
+//
+// Since: 2.0
+func (p *ProgressBar) Bind(data binding.Float) {
+	p.binder.SetCallback(p.updateFromData)
+	p.binder.Bind(data)
 }
 
 // SetValue changes the current value of this progress bar (from p.Min to p.Max).
 // The widget will be refreshed to indicate the change.
 func (p *ProgressBar) SetValue(v float64) {
 	p.Value = v
-	Renderer(p).Refresh()
+	p.Refresh()
 }
 
-// CreateRenderer is a private method to Fyne which links this widget to it's renderer
+// MinSize returns the size that this widget should not shrink below
+func (p *ProgressBar) MinSize() fyne.Size {
+	p.ExtendBaseWidget(p)
+	return p.BaseWidget.MinSize()
+}
+
+// CreateRenderer is a private method to Fyne which links this widget to its renderer
 func (p *ProgressBar) CreateRenderer() fyne.WidgetRenderer {
+	p.ExtendBaseWidget(p)
 	if p.Min == 0 && p.Max == 0 {
 		p.Max = 1.0
 	}
 
-	bar := canvas.NewRectangle(theme.PrimaryColor())
-	label := canvas.NewText("0%", theme.TextColor())
-	label.Alignment = fyne.TextAlignCenter
-	return &progressRenderer{[]fyne.CanvasObject{bar, label}, bar, label, p}
+	renderer := &progressRenderer{progress: p}
+	renderer.label.Alignment = fyne.TextAlignCenter
+	renderer.applyTheme()
+	renderer.updateBar()
+
+	renderer.SetObjects([]fyne.CanvasObject{&renderer.background, &renderer.bar, &renderer.label})
+	return renderer
+}
+
+// Unbind disconnects any configured data source from this ProgressBar.
+// The current value will remain at the last value of the data source.
+//
+// Since: 2.0
+func (p *ProgressBar) Unbind() {
+	p.binder.Unbind()
 }
 
 // NewProgressBar creates a new progress bar widget.
 // The default Min is 0 and Max is 1, Values set should be between those numbers.
 // The display will convert this to a percentage.
 func NewProgressBar() *ProgressBar {
-	p := &ProgressBar{Min: 0, Max: 1}
+	bar := &ProgressBar{Min: 0, Max: 1}
+	bar.ExtendBaseWidget(bar)
+	return bar
+}
 
-	Renderer(p).Layout(p.MinSize())
+// NewProgressBarWithData returns a progress bar connected with the specified data source.
+//
+// Since: 2.0
+func NewProgressBarWithData(data binding.Float) *ProgressBar {
+	p := NewProgressBar()
+	p.Bind(data)
 	return p
+}
+
+func progressBlendColor(clr color.Color) color.Color {
+	r, g, b, a := col.ToNRGBA(clr)
+	faded := uint8(a) / 2
+	return &color.NRGBA{R: r, G: g, B: b, A: faded}
+}
+
+func (p *ProgressBar) updateFromData(data binding.DataItem) {
+	if data == nil {
+		return
+	}
+	floatSource, ok := data.(binding.Float)
+	if !ok {
+		return
+	}
+
+	val, err := floatSource.Get()
+	if err != nil {
+		fyne.LogError("Error getting current data value", err)
+		return
+	}
+	p.SetValue(val)
 }
